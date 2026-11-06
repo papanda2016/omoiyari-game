@@ -23,6 +23,9 @@ button{font:inherit;cursor:pointer;color:var(--tx)}
 .btn{display:inline-block;border:2px solid var(--g);background:var(--card);border-radius:999px;padding:9px 16px;margin:6px 6px 0 0;font-weight:700;font-size:14px}
 .btn.p{background:var(--g);color:#fff}.btn.on{background:var(--tint)}
 .mini{font-size:13px;color:var(--sub)}.tag{font-size:12px;color:var(--sub)}
+.chip{font:inherit;border:2px solid var(--bd);background:var(--card);border-radius:999px;padding:6px 12px;margin:4px 4px 0 0;font-size:14px}
+.chip.on{border-color:var(--g);background:var(--tint);font-weight:700}
+.meta{border:2px dashed var(--g)}.meta .q{font-size:14px;margin:8px 0 0}
 </style></head><body><div class="wrap" id="app"></div>
 <script>
 // [絵文字,題,若葉,場面,最初のせりふ,ヒント,[[1手目,相手の返事,[[2手目,その後],[2手目,その後]]]×3]]
@@ -348,6 +351,34 @@ const S=[
 ["深呼吸する","（心の声）少し落ち着いてきた。",[["「もう一回話していい？」と言う","落ち着いて話せる。"],["「今は話せない」と言う","無理しなくていい。"]]],
 ["先生やパパ、ママに話す","（先生）「話してくれてありがとう」",[["何があったか話す","整理できる。"],["いっしょに考える","次にどうするか決められる。"]]]]]
 ];
+
+const FE=[["😊","うれしい"],["😌","ほっとする"],["😟","ふあん"],["😠","もやもや・イライラ"],["😢","かなしい"],["😶","よく分からない"]];
+const IN=["ちょっと","まあまあ","すごく"];
+const OF=[["😊","うれしい"],["😟","こまってる"],["😲","びっくり"],["😠","おこってる"],["🤔","分からない"]];
+const WY=["ほっとしたい","なかよくしたい","気もちを伝えたい","相手に合わせたい","いやな気もちをへらしたい","よく分からない"];
+const NX=["このやり方でいい","べつのやり方もためしたい","だれかに聞いてみたい"];
+const meta=()=>opt.meta;
+let r={};try{r=JSON.parse(localStorage.getItem("tgr")||"{}")}catch(e){}
+let cur={};
+function st(){r[si]=Object.assign({},cur);try{localStorage.setItem("tgr",JSON.stringify(r))}catch(e){}}
+const nm=x=>Array.isArray(x)?x[0]+" "+x[1]:x;
+function cb(k,arr){return arr.map((x,i)=>`<button class="chip ${cur[k]===i?"on":""}" onclick="sv('${k}',${i})">${nm(x)}</button>`).join("")}
+function R(k){
+if(k=="b")return cb("b",FE)+(cur.b!=null?`<div class="q">どのくらい？</div>${cb("bi",IN)}<div class="mini">気づけたね。どんな気もちも、あっていいんだよ。</div>`:"");
+if(k=="o")return cb("o",OF)+(cur.o!=null?`<div class="mini">人の気もちは、ほんとうは聞いてみないと分からないこともあるよ。いろいろ、ありえるね。</div>`:"");
+if(k=="a"){let m="";if(cur.a!=null){m=cur.b==null?"":cur.a==cur.b?"はじめと同じ気もちだね。同じままのこともあるよ。":`はじめは「${FE[cur.b][1]}」、いまは「${FE[cur.a][1]}」。気もちがうごいたね。なにがきっかけだったかな？`;m=`<div class="mini">${m}</div>`}return cb("a",FE)+m}
+if(k=="w")return cb("w",WY);
+if(k=="n")return cb("n",NX)+(cur.n==2?`<div class="mini">聞いてみるのも、すてきなやり方。パパやママ、先生にも聞いてみてね。</div>`:"")}
+function sv(k,i){cur[k]=i;st();document.getElementById("m-"+(k=="bi"?"b":k)).innerHTML=R(k=="bi"?"b":k)}
+const bf=()=>`<div class="card meta"><b>🔭 ちょっと、じぶんの心をのぞいてみよう</b><div class="mini">この場面、きみはいま、どんな気もち？（えらばなくてもOK）</div><div id="m-b">${R("b")}</div></div>`;
+const bo=()=>`<div class="card meta"><b>🔭 相手の心は？</b><div class="mini">相手は、どんな気もちかな？ 考えてみよう。（えらばなくてもOK）</div><div id="m-o">${R("o")}</div></div>`;
+const ba=()=>`<div class="card meta"><b>🔭 ふりかえりタイム</b><div class="mini">答えはひとつじゃないよ。思ったことをえらんでね。（とばしてもOK）</div><div class="q"><b>① いまの気もちは？</b></div><div id="m-a">${R("a")}</div><div class="q"><b>② このやり方を選んだとき、どうなりたかったかな？</b></div><div id="m-w">${R("w")}</div><div class="q"><b>③ にた場面があったら、つぎはどうしたい？</b></div><div id="m-n">${R("n")}</div><div class="mini" style="margin-top:8px">ふりかえりノートに、きみだけの記録としてたまるよ。</div></div>`;
+const rks=()=>Object.keys(r).filter(i=>S[i]&&["b","o","a","w","n"].some(f=>r[i][f]!=null));
+const nbCard=()=>`<div class="card"><b>🔭 ふりかえりノート（${rks().length}）</b><div class="mini">場面ごとの「気もち」と「どうしてそうしたか」が、ここにたまるよ。</div>${rks().length?`<button class="btn" onclick="nb()">見かえす</button>`:""}</div>`;
+function nb(){const ks=rks();let mv=0,tl=[0,0,0,0,0,0];ks.forEach(i=>{const e=r[i];if(e.b!=null)tl[e.b]++;if(e.b!=null&&e.a!=null&&e.a!=e.b)mv++});
+const L=ks.map(i=>{const e=r[i],s=S[i],f=(x,a)=>x!=null?nm(a[x]):"—";const p=e.x!=null&&s[6][e.x]&&s[6][e.x][2][e.y]?`<div class="mini">やり方：${s[6][e.x][0]} → ${s[6][e.x][2][e.y][0]}</div>`:"";
+return `<div class="card"><b>${s[0]} ${s[1]}</b>${p}<div class="mini">はじめの気もち：${f(e.b,FE)}${e.bi!=null?"（"+IN[e.bi]+"）":""}<br>相手の気もち（きみの予想）：${f(e.o,OF)}<br>いまの気もち：${f(e.a,FE)}<br>どうなりたかった？：${e.w!=null?WY[e.w]:"—"}<br>つぎは：${e.n!=null?NX[e.n]:"—"}</div><button class="btn" onclick="scene(${i})">この場面へ</button></div>`}).join("");
+app.innerHTML=`<h1>🔭 ふりかえりノート</h1><div class="card">これは、きみだけのノート。点数も、正解もないよ。<div class="mini">ふりかえりした場面：${ks.length}こ　／　気もちがうごいた場面：${mv}こ</div><div class="mini">よく出てくる気もち：${FE.map((x,i)=>tl[i]?x[0]+"×"+tl[i]:"").filter(Boolean).join("　")||"まだないよ"}</div></div>${L}<details class="card"><summary style="cursor:pointer"><b>👪 おうちの人へ</b></summary><p class="mini">いっしょにノートを見ながら「このとき、どんな気もちだった？」「どうなったらいいなと思った？」と聞いてみてください。答えが出なくても、ことばにならなくても大丈夫です。話を最後まで聞くことが、自分の心を見る力（メタ認知）をはぐくみます。</p></details><button class="btn p" onclick="home()">ホームへ</button>`;scrollTo(0,0)}
 const app=document.getElementById("app");let got={};try{got=JSON.parse(localStorage.getItem("tg")||"{}")}catch(e){}let si=0,a=0,lv=0;
 const lf=n=>"🌿".repeat(n);
 const cnt=i=>Object.keys(got).filter(k=>k.startsWith(i+"-")).length;
@@ -355,23 +386,23 @@ const tot=()=>Object.keys(got).length;
 let seen={},nu=0;try{seen=JSON.parse(localStorage.getItem("tgs")||"{}")}catch(e){}
 let mk={};try{mk=JSON.parse(localStorage.getItem("tgm")||"{}")}catch(e){}
 const MKS=["🐻","🐰","🐱","🐶","🐼","🐥","👦","👧"];
-let opt={fs:0,all:0,mk:"🐻"};try{opt=Object.assign(opt,JSON.parse(localStorage.getItem("tgo")||"{}"))}catch(e){}
+let opt={fs:0,all:0,mk:"🐻",meta:1};try{opt=Object.assign(opt,JSON.parse(localStorage.getItem("tgo")||"{}"))}catch(e){}
 const started=()=>S.filter((s,i)=>seen[i]||cnt(i)).length;const STEP=2,BASE=12;const vis=()=>opt.all?S.length:Math.min(S.length,BASE+STEP*started());const avail=i=>i<vis();const open=()=>vis()>=S.length;const left=()=>S.length-vis();
-function home(){
+function home(){cur={};
 applyO();app.innerHTML=`<div style="text-align:right"><button class="btn" aria-label="せってい" onclick="settings()" style="padding:4px 12px;margin:0">⚙️</button></div><h1>🌱 どうしようかな？</h1><p class="lead">場面の中で、相手と会話しながら<br>「こうしたらどうなるかな？」をためすゲームだよ。<br><b>正解もまちがいもないよ。</b>どれをえらんでもだいじょうぶ。<br>つかれたら、いつでもやめていいよ。</p>
 <div>${[0,1,2,3,4,5].map(i=>`<button class="btn ${i==lv?"on":""}" onclick="lv=${i};home()">${i?lf(i):"すべて"}</button>`).join("")}</div>
 ${S.map((s,i)=>(!lv||s[2]==lv)&&avail(i)?`<button class="sc" onclick="scene(${i})"><span class="em">${s[0]}</span><span><b>${s[1]}${mk["s"+i]?" "+opt.mk:""}</b><small>${lf(s[2])}　${cnt(i)}/6 のやり方をためした</small></span></button>`:"").join("")}
-${open()?`<p class="mini">🌱 つづきの場面がひらいたよ。</p>`:`<div class="card">🔒 <b>つづきの場面</b><div class="mini">あと${left()}こ、ひらいていない場面があるよ。場面をひとつためすたびに、${STEP}つずつひらくよ。</div></div>`}<div class="card"><b>${opt.mk} きになるマーク（${Object.keys(mk).length}）</b><div class="mini">あとで考えたい場面ややり方に、マークをつけられるよ。</div>${Object.keys(mk).length?`<button class="btn" onclick="marks()">見かえす</button>`:""}</div><div class="card"><b>🌿 ヒントカード</b>${tot()?`<div class="mini">場面をさいごまで進めると、ヒントがたまるよ。</div><button class="btn" onclick="cards()">見かえす</button>`:`<div class="mini">場面をさいごまで進めると、ヒントカードがたまるよ。</div>`}</div>
+${open()?`<p class="mini">🌱 つづきの場面がひらいたよ。</p>`:`<div class="card">🔒 <b>つづきの場面</b><div class="mini">あと${left()}こ、ひらいていない場面があるよ。場面をひとつためすたびに、${STEP}つずつひらくよ。</div></div>`}<div class="card"><b>${opt.mk} きになるマーク（${Object.keys(mk).length}）</b><div class="mini">あとで考えたい場面ややり方に、マークをつけられるよ。</div>${Object.keys(mk).length?`<button class="btn" onclick="marks()">見かえす</button>`:""}</div>${meta()?nbCard():""}<div class="card"><b>🌿 ヒントカード</b>${tot()?`<div class="mini">場面をさいごまで進めると、ヒントがたまるよ。</div><button class="btn" onclick="cards()">見かえす</button>`:`<div class="mini">場面をさいごまで進めると、ヒントカードがたまるよ。</div>`}</div>
 <p class="mini">※「対人関係のこまりごと ガイド」をもとにした練習用のゲームです。実際の反応は、相手や場面によってちがいます。つらいときは、信頼できる大人に話してね。（🌿は、ガイドの若葉マークだよ。🌿が多いほど、むずかしく感じることが多い場面なんだ）</p>`}
 function hd(s){return `<p class="tag">${s[0]} ${s[1]}　${lf(s[2])}</p><div class="card">${s[3]}</div>`}
-function scene(i){si=i;const s=S[i];
-app.innerHTML=hd(s)+`<div class="say">${s[4]}</div><p class="mini">きみなら、どうする？</p>${s[2]>3?'<p class="mini">🏡 迷ったら、パパやママにも聞いてみてね。</p>':''}`+s[6].map((o,j)=>`<button class="ch" onclick="turn2(${j})">${o[0]}</button>`).join("")+`${mb("s"+si)}<button class="btn" onclick="home()">いまはやめておく</button>`;scrollTo(0,0)}
+function scene(i){si=i;const s=S[i];if(cur.sc!==i)cur={sc:i};else{delete cur.o;delete cur.a;delete cur.w;delete cur.n}
+app.innerHTML=hd(s)+`<div class="say">${s[4]}</div>${meta()?bf():""}<p class="mini">きみなら、どうする？</p>${s[2]>3?'<p class="mini">🏡 迷ったら、パパやママにも聞いてみてね。</p>':''}`+s[6].map((o,j)=>`<button class="ch" onclick="turn2(${j})">${o[0]}</button>`).join("")+`${mb("s"+si)}<button class="btn" onclick="home()">いまはやめておく</button>`;scrollTo(0,0)}
 function turn2(j){a=j;const s=S[si],o=s[6][j];const b0=vis();seen[si]=1;try{localStorage.setItem("tgs",JSON.stringify(seen))}catch(e){}nu=vis()-b0;
-app.innerHTML=hd(s)+`<div class="me">きみ：${o[0]}</div><div class="say">${o[1]}</div><p class="mini">それを聞いて、きみは……</p>`+o[2].map((p,k)=>`<button class="ch" onclick="end(${k})">${p[0]}</button>`).join("")+`<button class="btn" onclick="scene(${si})">1つ目にもどる</button>`;scrollTo(0,0)}
-function end(k){const s=S[si],o=s[6][a],p=o[2][k];got[si+"-"+a+"-"+k]=1;try{localStorage.setItem("tg",JSON.stringify(got))}catch(e){}
+app.innerHTML=hd(s)+`<div class="me">きみ：${o[0]}</div><div class="say">${o[1]}</div>${meta()?bo():""}<p class="mini">それを聞いて、きみは……</p>`+o[2].map((p,k)=>`<button class="ch" onclick="end(${k})">${p[0]}</button>`).join("")+`<button class="btn" onclick="scene(${si})">1つ目にもどる</button>`;scrollTo(0,0)}
+function end(k){const s=S[si],o=s[6][a],p=o[2][k];got[si+"-"+a+"-"+k]=1;cur.x=a;cur.y=k;if(meta())st();try{localStorage.setItem("tg",JSON.stringify(got))}catch(e){}
 app.innerHTML=hd(s)+`<div class="me">きみ：${o[0]}</div><div class="say">${o[1]}</div><div class="me">きみ：${p[0]}</div>
 <div class="sec b"><h3>👀 そのあと（一例）</h3>${p[1]}<div class="mini">ほかのなりゆきになることも、もちろんあるよ。</div></div>
-<div class="sec c"><h3>🌿 ヒントカード</h3>${s[5]}</div>${s[2]>3?'<div class="sec b"><h3>🏡 迷ったときは</h3>パパやママにも聞いてみてね。きっと、いっしょに考えてくれるよ。</div>':''}${others(s,a,k)}
+<div class="sec c"><h3>🌿 ヒントカード</h3>${s[5]}</div>${s[2]>3?'<div class="sec b"><h3>🏡 迷ったときは</h3>パパやママにも聞いてみてね。きっと、いっしょに考えてくれるよ。</div>':''}${meta()?ba():""}${others(s,a,k)}
 <p class="mini">どのやり方にも、それぞれ良いところがあるよ。人によって、日によって、やり方はちがっていいんだ。</p>
 ${nu>0?`<div class="mini">🎉 新しい場面が${nu}つひらいたよ。ホームで見られるよ。</div>`:""}${mb("p"+si+"-"+a+"-"+k)}<button class="btn p" onclick="scene(${si})">べつのやり方もためす</button>${si<S.length-1&&avail(si+1)?`<button class="btn" onclick="scene(${si+1})">次の場面へ</button>`:""}<button class="btn" onclick="home()">ホームへ</button>`;scrollTo(0,0)}
 function others(s,a,k){let h="";s[6].forEach((o,i)=>o[2].forEach((p,j)=>{if(i==a&&j==k)return;h+=`<div class="mini" style="margin:10px 0"><b>${o[0]}</b> → ${p[0]}<br>${p[1]}</div>`}));return `<details class="card"><summary style="cursor:pointer"><b>👥 ほかのやり方も見てみる</b></summary><p class="mini">人によって、やり方はいろいろ。どれも、自然なやり方のひとつだよ。きみのやり方も、そのひとつ。</p>${h}</details>`}
@@ -382,11 +413,12 @@ function settings(){applyO();app.innerHTML=`<h1>⚙️ せってい</h1>
 <div class="card"><b>文字の大きさ</b><div><button class="btn ${opt.fs?"":"on"}" onclick="setO('fs',0)">ふつう</button><button class="btn ${opt.fs?"on":""}" onclick="setO('fs',1)">大きい</button></div></div>
 <div class="card"><b>場面のひらきかた</b><div class="mini">ふだんは、場面をためすたびに少しずつひらくよ。</div><div><button class="btn ${opt.all?"":"on"}" onclick="setO('all',0)">少しずつ</button><button class="btn ${opt.all?"on":""}" onclick="setO('all',1)">ぜんぶひらく</button></div></div>
 <div class="card"><b>マークのかたち</b><div class="mini">きになるところにつけるマークをえらべるよ。</div><div>${MKS.map(m=>`<button class="btn ${opt.mk==m?"on":""}" onclick="setO('mk','${m}')" style="font-size:22px;padding:4px 12px">${m}</button>`).join("")}</div></div>
+<div class="card"><b>じぶんの心をのぞくコーナー</b><div class="mini">気もちをえらんだり、ふりかえったりするコーナーを、出す・出さないを決められるよ。</div><div><button class="btn ${opt.meta?"on":""}" onclick="setO('meta',1)">出す</button><button class="btn ${opt.meta?"":"on"}" onclick="setO('meta',0)">出さない</button></div></div>
 <div class="card"><b>マークをけす</b><div class="mini">つけたマークを、ぜんぶ消すよ（${Object.keys(mk).length}こ）。</div><div id="rm"><button class="btn" onclick="askM()">ぜんぶ消す…</button></div></div>
-<div class="card"><b>しんちょくをリセット</b><div class="mini">ためしたやり方・ヒントカード・ひらいた場面が、はじめの状態にもどるよ。</div><div id="rs"><button class="btn" onclick="askR()">リセットする…</button></div></div>
+<div class="card"><b>しんちょくをリセット</b><div class="mini">ためしたやり方・ヒントカード・ひらいた場面・ふりかえりノートが、はじめの状態にもどるよ。</div><div id="rs"><button class="btn" onclick="askR()">リセットする…</button></div></div>
 <button class="btn p" onclick="home()">ホームへもどる</button>`;scrollTo(0,0)}
 function askR(){document.getElementById("rs").innerHTML=`<div class="mini">ほんとうにリセットしていい？ もとにはもどせないよ。</div><button class="btn" onclick="doR()">リセットする</button><button class="btn" onclick="settings()">やめる</button>`}
-function doR(){got={};seen={};nu=0;try{localStorage.removeItem("tg");localStorage.removeItem("tgs")}catch(e){}app.innerHTML=`<h1>⚙️ せってい</h1><div class="card">✅ リセットしたよ。</div><button class="btn p" onclick="home()">ホームへ</button>`}
+function doR(){got={};seen={};nu=0;r={};cur={};try{localStorage.removeItem("tgr");localStorage.removeItem("tg");localStorage.removeItem("tgs")}catch(e){}app.innerHTML=`<h1>⚙️ せってい</h1><div class="card">✅ リセットしたよ。</div><button class="btn p" onclick="home()">ホームへ</button>`}
 function saveM(){try{localStorage.setItem("tgm",JSON.stringify(mk))}catch(e){}}
 function mkLabel(k){return k[0]=="s"?(mk[k]?`${opt.mk} この場面にマークすみ（もう一度ではずす）`:`${opt.mk} この場面にマーク`):(mk[k]?`${opt.mk} このやり方にマークすみ（もう一度ではずす）`:`${opt.mk} このやり方にマーク`)}
 function mb(k){return `<button class="btn ${mk[k]?"on":""}" onclick="tm('${k}',this)">${mkLabel(k)}</button>`}
